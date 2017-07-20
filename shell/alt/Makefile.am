@@ -7,7 +7,7 @@ AM_CPPFLAGS =					\
 	$(WACOM_PANEL_CFLAGS)			\
 	-I$(top_srcdir)/shell			\
 	-I$(top_srcdir)/panels/common		\
-	-I$(top_srcdir)/libgd
+	-I$(top_srcdir)/subprojects/libgd
 
 noinst_LTLIBRARIES = libshell_alt.la
 
@@ -15,7 +15,7 @@ libshell_alt_la_SOURCES = 			\
 	cc-window.c				\
 	cc-window.h
 
-libshell_alt_la_LIBADD = $(top_builddir)/libgd/libgd.la
+libshell_alt_la_LIBADD = $(top_builddir)/subprojects/libgd/libgd.la
 
 test:
 
