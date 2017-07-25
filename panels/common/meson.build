@@ -1,0 +1,83 @@
+common_inc = include_directories('.')
+
+common_sources = []
+
+enums = 'gsd-common-enums'
+enums_header = files('gsd-device-manager.h')
+
+common_sources += gnome.mkenums(
+  enums + '.h',
+  sources: enums_header,
+  fhead: '#ifndef GSD_COMMON_ENUMS_H\n#define GSD_COMMON_ENUMS_H\n\n#include <glib-object.h>\n\nG_BEGIN_DECLS\n',
+  fprod: '/* enumerations from "@filename@" */\n',
+  vhead: 'GType @enum_name@_get_type (void) G_GNUC_CONST;\n#define GSD_TYPE_@ENUMSHORT@ (@enum_name@_get_type())\n',
+  ftail: 'G_END_DECLS\n\n#endif /* !GSD_COMMON_ENUMS_H */'
+)
+
+common_sources += gnome.mkenums(
+  enums + '.c',
+  sources: enums_header,
+  fhead: '#include "gsd-device-manager.h"\n#include "gsd-common-enums.h"\n',
+  fprod: '\n/* enumerations from "@filename@" */',
+  vhead: 'GType\n@enum_name@_get_type (void)\n{\n  static GType etype = 0;\n  if (etype == 0) {\n    static const G@Type@Value values[] = {',
+  vprod: '      { @VALUENAME@, "@VALUENAME@", "@valuenick@" },',
+  vtail: '      { 0, NULL, NULL }\n    };\n    etype = g_@type@_register_static ("@EnumName@", values);\n  }\n  return etype;\n}\n'
+)
+
+sources = common_sources + files(
+  'cc-common-language.c',
+  'cc-language-chooser.c',
+  'cc-util.c'
+)
+
+resource_data = files('language-chooser.ui')
+
+sources += gnome.compile_resources(
+  'cc-' + cappletname + '-resources',
+  cappletname + '.gresource.xml',
+  source_dir: '.',
+  c_name: 'cc_' + cappletname,
+  dependencies: resource_data,
+  export: true
+)
+
+deps = common_deps + [
+  gnome_desktop_dep,
+  dependency('fontconfig')
+]
+
+liblanguage = static_library(
+  'language',
+  sources: sources,
+  include_directories: top_inc,
+  dependencies: deps
+)
+
+sources = common_sources + files(
+  'gsd-device-manager.c',
+  'gsd-device-manager-x11.c',
+  'gsd-input-helper.c'
+)
+
+deps = common_deps
+
+if have_udep
+  sources += files('gsd-device-manager-udev.c')
+
+  deps += [
+    udev_dep,
+    dependency('gdk-wayland-3.0', required: false)
+  ]
+endif
+
+libdevice = static_library(
+  'device',
+  sources: sources,
+  include_directories: top_inc,
+  dependencies: deps
+)
+
+install_data(
+  'gnome-control-center.rules',
+  install_dir: join_paths(control_center_datadir, 'polkit-1', 'rules.d')
+)

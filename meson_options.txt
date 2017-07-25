@@ -1,0 +1,5 @@
+option('enable-cheese', type: 'combo', choices: ['yes', 'no', 'auto'], value: 'auto', description: 'enable cheese webcam support')
+option('enable-ibus', type: 'boolean', value: true, description: 'Disable IBus support')
+option('with-gnome-session-libexecdir', type: 'string', value: '', description: 'Directory for gnome-session s libexecdir')
+option('enable-documentation', type: 'boolean', value: false, description: 'build documentation')
+option('enable-update-mimedb', type: 'boolean', value: true, description: 'update-mime-database after install')

@@ -17,6 +17,8 @@ libshell_alt_la_SOURCES = 			\
 
 libshell_alt_la_LIBADD = $(top_builddir)/subprojects/libgd/libgd.la
 
+EXTRA_DIST = meson.build
+
 test:
 
 -include $(top_srcdir)/git.mk
