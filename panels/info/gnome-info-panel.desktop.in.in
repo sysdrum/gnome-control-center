@@ -1,7 +1,7 @@
 [Desktop Entry]
 # Translators: Add soft hyphens to your translations so that the icon view won't clip your translations. See https://bugzilla.gnome.org/show_bug.cgi?id=647087#c13 for details
-_Name=De­tails
-_Comment=View information about your system
+Name=De­tails
+Comment=View information about your system
 Exec=gnome-control-center info
 Icon=applications-system
 Terminal=false
@@ -17,4 +17,4 @@ X-GNOME-Bugzilla-Version=@VERSION@
 # Translators: those are keywords for the System Information panel
 # "Preferred Applications" is the old name for the preference, so make
 # sure that you use the same "translation" for those keywords
-_Keywords=device;system;information;memory;processor;version;default;application;preferred;cd;dvd;usb;audio;video;disc;removable;media;autorun;
+Keywords=device;system;information;memory;processor;version;default;application;preferred;cd;dvd;usb;audio;video;disc;removable;media;autorun;

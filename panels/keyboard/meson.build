@@ -7,11 +7,12 @@ desktop_in = configure_file(
   configuration: desktop_conf
 )
 
-custom_target(
+i18n.merge_file(
   desktop,
+  type: 'desktop',
   input: desktop_in,
   output: desktop,
-  command: intltool_desktop_cmd,
+  po_dir: po_dir,
   install: true,
   install_dir: control_center_desktopdir
 )
@@ -43,25 +44,19 @@ configure_file(
   configuration: pc_conf
 )
 
-xml_files = [
+xml_data = files(
   '00-multimedia.xml',
   '01-input-sources.xml',
   '01-launchers.xml',
   '01-screenshot.xml',
   '01-system.xml',
   '50-accessibility.xml'
-]
+)
 
-foreach file: xml_files
-  custom_target(
-    file,
-    input: file + '.in',
-    output: file,
-    command: [intltool_merge, '-x', '-u', '--no-translations', '@INPUT@', '@OUTPUT@'],
-    install: true,
-    install_dir: join_paths(control_center_pkgdatadir, 'keybindings')
-  )
-endforeach
+install_data(
+  xml_data,
+  install_dir: join_paths(control_center_pkgdatadir, 'keybindings')
+)
 
 sources = files(
   'cc-' + cappletname + '-panel.c',

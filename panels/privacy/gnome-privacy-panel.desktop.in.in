@@ -1,7 +1,7 @@
 [Desktop Entry]
 # Translators: Add soft hyphens to your translations so that the icon view won't clip your translations. See https://bugzilla.gnome.org/show_bug.cgi?id=647087#c13 for details
-_Name=Pri­va­cy
-_Comment=Protect your personal information and control what others might see
+Name=Pri­va­cy
+Comment=Protect your personal information and control what others might see
 Exec=gnome-control-center privacy
 # FIXME
 Icon=preferences-system-privacy
@@ -16,4 +16,4 @@ X-GNOME-Bugzilla-Product=gnome-control-center
 X-GNOME-Bugzilla-Component=privacy
 X-GNOME-Bugzilla-Version=@VERSION@
 # Translators: those are keywords for the privacy control-center panel
-_Keywords=screen;lock;diagnostics;crash;private;recent;temporary;tmp;index;name;network;identity;
+Keywords=screen;lock;diagnostics;crash;private;recent;temporary;tmp;index;name;network;identity;

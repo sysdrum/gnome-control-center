@@ -10,22 +10,23 @@ desktop_in = configure_file(
   configuration: desktop_conf
 )
 
-custom_target(
+i18n.merge_file(
   desktop,
+  type: 'desktop',
   input: desktop_in,
   output: desktop,
-  command: intltool_desktop_cmd,
+  po_dir: po_dir,
   install: true,
   install_dir: control_center_desktopdir
 )
 
 polkit = 'org.gnome.controlcenter.' + cappletname + '.policy'
 
-custom_target(
+i18n.merge_file(
   polkit,
   input: polkit + '.in',
   output: polkit,
-  command: intltool_xml_cmd,
+  po_dir: po_dir,
   install: true,
   install_dir: join_paths(control_center_datadir, 'polkit-1', 'actions')
 )

@@ -1,7 +1,7 @@
 [Desktop Entry]
 # Translators: Add soft hyphens to your translations so that the icon view won't clip your translations. See https://bugzilla.gnome.org/show_bug.cgi?id=647087#c13 for details
-_Name=Wa­com Tab­let
-_Comment=Set button mappings and adjust stylus sensitivity for graphics tablets
+Name=Wa­com Tab­let
+Comment=Set button mappings and adjust stylus sensitivity for graphics tablets
 Exec=gnome-control-center wacom
 Icon=input-tablet
 Terminal=false
@@ -15,4 +15,4 @@ X-GNOME-Bugzilla-Product=gnome-control-center
 X-GNOME-Bugzilla-Component=wacom
 X-GNOME-Bugzilla-Version=@VERSION@
 # Translators: those are keywords for the wacom tablet control-center panel
-_Keywords=Tablet;Wacom;Stylus;Eraser;Mouse;
+Keywords=Tablet;Wacom;Stylus;Eraser;Mouse;
