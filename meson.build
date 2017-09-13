@@ -358,6 +358,10 @@ intltool_xml_cmd = [intltool_merge, '-x', '-u', '-c', intltool_cache, po_dir, '@
 top_inc = include_directories('.')
 shell_inc = include_directories('shell')
 
+update_from_gsd = find_program('update-from-gsd.sh')
+update_from_gsd_in = files('update-from-gsd.in')
+update_from_nma_in = files('update-from-nma.in')
+
 subdir('po')
 subdir('panels')
 subdir('shell')
