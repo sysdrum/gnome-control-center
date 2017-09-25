@@ -112,7 +112,7 @@ static void
 info_panel_setup_selector (CcInfoPanel  *self)
 {
   GtkTreeView *view;
-  GtkListStore *model;
+  g_autoptr(GtkListStore) model = NULL;
   GtkTreeSelection *selection;
   GtkTreeViewColumn *column;
   GtkCellRenderer *renderer;
@@ -124,7 +124,6 @@ info_panel_setup_selector (CcInfoPanel  *self)
 
   model = gtk_list_store_new (1, G_TYPE_STRING);
   gtk_tree_view_set_model (view, GTK_TREE_MODEL (model));
-  g_object_unref (model);
 
   renderer = gtk_cell_renderer_text_new ();
   gtk_cell_renderer_set_padding (renderer, 4, 4);
@@ -174,7 +173,7 @@ info_panel_setup_overview (CcInfoPanel  *self)
 static void
 cc_info_panel_init (CcInfoPanel *self)
 {
-  GError *error = NULL;
+  g_autoptr(GError) error = NULL;
 
   g_resources_register (cc_info_get_resource ());
 
@@ -185,7 +184,6 @@ cc_info_panel_init (CcInfoPanel *self)
                                      &error) == 0)
     {
       g_warning ("Could not load interface file: %s", error->message);
-      g_error_free (error);
       return;
     }
 
