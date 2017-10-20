@@ -55,6 +55,8 @@ bg_source_calculate_thumbnail_dimensions (BgSource *source)
   if (priv->window == NULL)
     return;
 
+
+  g_print("Error Here1\n");
   scale_factor = gtk_widget_get_scale_factor (priv->window);
   if (scale_factor > 1)
     {
@@ -173,6 +175,8 @@ bg_source_get_scale_factor (BgSource *source)
   g_return_val_if_fail (BG_IS_SOURCE (source), 1);
 
   priv = bg_source_get_instance_private (source);
+
+  g_print("Error Here 2\n");
   return gtk_widget_get_scale_factor (priv->window);
 }
 
