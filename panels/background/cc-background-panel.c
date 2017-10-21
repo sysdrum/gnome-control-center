@@ -370,6 +370,7 @@ get_screenshot_async (CcBackgroundPanel *panel)
   tmpname = g_strdup_printf ("scr-%d.png", g_random_int ());
   g_free (panel->screenshot_path);
   panel->screenshot_path = g_build_filename (path, tmpname, NULL);
+  g_print (panel->screenshot_path);
   g_free (path);
   g_free (tmpname);
 
@@ -403,7 +404,7 @@ on_preview_draw (GtkWidget         *widget,
   if (panel->display_screenshot == NULL
       && panel->screenshot_path == NULL)
     {
-      get_screenshot_async (panel);
+      //get_screenshot_async (panel);
     }
   else
     update_display_preview (panel, widget, panel->current_background);
@@ -720,17 +721,64 @@ create_view (GtkWidget *parent, GtkTreeModel *model)
                                   "surface", 0,
                                   NULL);
 
-  gtk_flow_box_insert (GTK_FLOW_BOX (parent), sw, -1);
   return sw;
 }
+
+static gboolean
+on_slides_draw (GtkWidget         *widget,
+                cairo_t           *cr,
+                CcBackgroundPanel *panel)
+{
+  GdkPixbuf *pixbuf;
+
+  g_print("Redraw: %s\n", gtk_widget_get_name(widget));
+  pixbuf = get_or_create_cached_pixbuf (panel, widget, panel->current_background);
+
+  cr = gdk_cairo_create (gtk_widget_get_window (widget));
+  gdk_cairo_set_source_pixbuf (cr,
+                               pixbuf,
+                               0, 0);
+  cairo_paint (cr);
+  cairo_destroy (cr);
+  return TRUE;
+}
+
 
 static void
 cc_background_create_wallpapers (CcBackgroundPanel *panel, GtkWidget *parent)
 {
-  GtkListStore *model;
-  GtkWidget *sw;
-  model = bg_source_get_liststore (BG_SOURCE (bg_wallpapers_source_new (GTK_WINDOW (WID ("background-desktop-drawingarea")))));
-  sw = create_view (parent, GTK_TREE_MODEL (model));
+  //GtkListStore *model;
+  //GtkWidget *sw;
+  //model = bg_source_get_liststore (BG_SOURCE (bg_wallpapers_source_new (GTK_WINDOW (WID ("background-desktop-drawingarea")))));
+  //sw = create_view (parent, GTK_TREE_MODEL (model));
+
+  GtkWidget *box;
+  GtkWidget *widget;
+  GdkPixbuf *pixbuf;
+  const gint preview_width = 309;
+  const gint preview_height = 168;
+  gint scale_factor;
+
+  scale_factor = gtk_widget_get_scale_factor (panel);
+  for (int i = 0; i < 18; i++) {
+    //widget = gtk_drawing_area_new ();
+    box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
+    pixbuf = gdk_pixbuf_new_from_file ("/usr/share/backgrounds/gnome/adwaita-day.jpg", NULL);
+    pixbuf = gdk_pixbuf_scale_simple (pixbuf,
+                                      preview_width,
+                                      preview_height,
+                                      GDK_INTERP_BILINEAR);
+
+    //widget = gtk_image_new ();
+    //pixbuf = get_or_create_cached_pixbuf (panel, widget, panel->current_background);
+    widget = gtk_image_new_from_pixbuf (pixbuf);
+
+    gtk_box_pack_start (box, widget, FALSE, FALSE, 0);
+    gtk_flow_box_insert (GTK_FLOW_BOX (parent), box, -1);
+    //g_signal_connect (G_OBJECT (widget), "draw",
+    //                G_CALLBACK (on_slides_draw), panel);
+
+  }
 }
 
 static void
