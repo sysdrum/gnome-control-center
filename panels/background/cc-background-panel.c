@@ -211,31 +211,48 @@ get_or_create_cached_pixbuf (CcBackgroundPanel *panel,
   const gint preview_height = 168;
   gint scale_factor;
   GdkPixbuf *pixbuf;
+  GdkPixbuf *pixbuf_tmp;
 
   pixbuf = g_object_get_data (G_OBJECT (background), "pixbuf");
   if (pixbuf == NULL)
     {
+      gtk_widget_get_allocation (widget, &allocation);
+      scale_factor = gtk_widget_get_scale_factor (widget);
+      pixbuf = cc_background_item_get_frame_thumbnail (background,
+                                                       panel->thumb_factory,
+                                                       preview_width,
+                                                       preview_height,
+                                                       scale_factor,
+                                                       -2, TRUE);
+
       if (background == panel->current_background &&
           panel->display_screenshot != NULL)
         {
-          pixbuf = gdk_pixbuf_scale_simple (panel->display_screenshot,
-                                            preview_width,
-                                            preview_height,
-                                            GDK_INTERP_BILINEAR);
+          /* we need to add an alpha channel for for copy aera */ 
+          pixbuf = gdk_pixbuf_add_alpha (pixbuf, FALSE, 0,0,0);
+
+          pixbuf_tmp = gdk_pixbuf_scale_simple (panel->display_screenshot,
+                                             preview_width,
+                                             (preview_width
+                                              * gdk_pixbuf_get_height (panel->display_screenshot) 
+                                              / gdk_pixbuf_get_width(panel->display_screenshot)),
+                                             GDK_INTERP_BILINEAR);
+
+          gdk_pixbuf_copy_area (pixbuf_tmp,
+                                0,
+                                0,
+                                preview_width,
+                                gdk_pixbuf_get_height(pixbuf_tmp),
+                                pixbuf,
+                                0,
+                                0);
+
+          g_object_unref (pixbuf_tmp);
         }
-      else
-        {
-          gtk_widget_get_allocation (widget, &allocation);
-          scale_factor = gtk_widget_get_scale_factor (widget);
-          pixbuf = cc_background_item_get_frame_thumbnail (background,
-                                                           panel->thumb_factory,
-                                                           preview_width,
-                                                           preview_height,
-                                                           scale_factor,
-                                                           -2, TRUE);
-        }
+
       g_object_set_data_full (G_OBJECT (background), "pixbuf", pixbuf, g_object_unref);
     }
+
   return pixbuf;
 }
 
@@ -274,8 +291,6 @@ on_screenshot_finished (GObject *source,
   CcBackgroundPanel *panel = data->panel;
   GError *error;
   GdkPixbuf *pixbuf;
-  cairo_surface_t *surface;
-  cairo_t *cr;
   GVariant *result;
 
   error = NULL;
@@ -306,32 +321,25 @@ on_screenshot_finished (GObject *source,
       goto out;
     }
 
-  surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32,
-                                        data->monitor_rect.width, data->monitor_rect.height);
-  cr = cairo_create (surface);
-  gdk_cairo_set_source_pixbuf (cr, pixbuf,
-                               data->capture_rect.x - data->monitor_rect.x,
-                               data->capture_rect.y - data->monitor_rect.y);
-  cairo_paint (cr);
-  g_object_unref (pixbuf);
+  g_clear_object (&panel->display_screenshot);
 
   if (data->whole_monitor) {
-    /* clear the workarea */
-    cairo_save (cr);
-    cairo_set_operator (cr, CAIRO_OPERATOR_CLEAR);
-    cairo_rectangle (cr, data->workarea_rect.x - data->monitor_rect.x,
-                     data->workarea_rect.y - data->monitor_rect.y,
-                     data->workarea_rect.width,
-                     data->workarea_rect.height);
-    cairo_fill (cr);
-    cairo_restore (cr);
+    /* copy only top panel area from pixbuf */
+    gdk_pixbuf_copy_area (pixbuf,
+                          0,
+                          0,
+                          data->monitor_rect.width,
+                          data->monitor_rect.height - data->workarea_rect.height,
+                          panel->display_screenshot,
+                          0,
+                          0);
+    g_object_unref (pixbuf);
+
+  }
+  else {
+    panel->display_screenshot = pixbuf;
   }
 
-  g_clear_object (&panel->display_screenshot);
-  panel->display_screenshot = gdk_pixbuf_get_from_surface (surface,
-                                                                 0, 0,
-                                                                 data->monitor_rect.width,
-                                                                 data->monitor_rect.height);
   /* invalidate existing cached pixbuf */
   g_object_set_data (G_OBJECT (panel->current_background), "pixbuf", NULL);
 
@@ -339,10 +347,7 @@ on_screenshot_finished (GObject *source,
   g_unlink (panel->screenshot_path);
   g_clear_pointer (&panel->screenshot_path, g_free);
 
-  cairo_destroy (cr);
-  cairo_surface_destroy (surface);
-
- out:
+out:
   update_display_preview (panel, WID ("background-desktop-drawingarea"), panel->current_background);
   g_free (data);
 }
@@ -497,11 +502,11 @@ reload_current_bg (CcBackgroundPanel *panel,
       if (cc_background_item_get_placement (saved) == G_DESKTOP_BACKGROUND_STYLE_NONE)
         flags &=~ (CC_BACKGROUND_ITEM_HAS_PCOLOR | CC_BACKGROUND_ITEM_HAS_SCOLOR);
       g_object_set (G_OBJECT (configured),
-		    "name", cc_background_item_get_name (saved),
-		    "flags", flags,
-		    "source-url", cc_background_item_get_source_url (saved),
-		    "source-xml", cc_background_item_get_source_xml (saved),
-		    NULL);
+                    "name", cc_background_item_get_name (saved),
+                    "flags", flags,
+                    "source-url", cc_background_item_get_source_url (saved),
+                    "source-xml", cc_background_item_get_source_xml (saved),
+                    NULL);
     }
   if (saved != NULL)
     g_object_unref (saved);
@@ -525,9 +530,9 @@ create_save_dir (void)
   char *path;
 
   path = g_build_filename (g_get_user_config_dir (),
-			   "gnome-control-center",
-			   "backgrounds",
-			   NULL);
+                           "gnome-control-center",
+                           "backgrounds",
+                           NULL);
   if (g_mkdir_with_parents (path, USER_DIR_MODE) < 0)
     {
       g_warning ("Failed to create directory '%s'", path);
