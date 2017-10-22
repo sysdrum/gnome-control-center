@@ -786,7 +786,7 @@ cc_background_panel_init (CcBackgroundPanel *panel)
 {
   gchar *objects[] = {"background-panel", NULL };
   GError *err = NULL;
-  GtkCssProvider *provider;
+  GtkStyleProvider *provider;
   GtkStyleContext *context;
   GtkWidget *widget;
 
@@ -821,15 +821,13 @@ cc_background_panel_init (CcBackgroundPanel *panel)
 
   /* add border to background preview */
   widget = WID ("background-preview-top");
-  provider = gtk_css_provider_new ();
-  gtk_css_provider_load_from_data (GTK_CSS_PROVIDER (provider),
-                                   ".black-border {\n"
-                                   "    border: 1px solid black;\n"
-                                   "}", -1, NULL);
+  provider = GTK_STYLE_PROVIDER (gtk_css_provider_new ());
+  gtk_css_provider_load_from_resource (provider,
+                                       "org/gnome/control-center/background/background.css");
   context = gtk_widget_get_style_context (widget);
-  gtk_style_context_add_provider (context,
-                                  GTK_STYLE_PROVIDER (provider),
-                                  GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+  gtk_style_context_add_provider_for_screen (gdk_screen_get_default(),
+                                             provider,
+                                             GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
   g_object_unref (provider);
 
   /* setup preview area */
