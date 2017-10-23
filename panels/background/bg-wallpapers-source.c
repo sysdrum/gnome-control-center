@@ -56,7 +56,7 @@ load_wallpapers (gchar              *key,
   if (deleted)
     return;
 
-  gtk_list_store_append (store, &iter);
+//  gtk_list_store_append (store, &iter);
 
   scale_factor = bg_source_get_scale_factor (BG_SOURCE (source));
   thumbnail_height = bg_source_get_thumbnail_height (BG_SOURCE (source));
@@ -68,13 +68,21 @@ load_wallpapers (gchar              *key,
     goto out;
 
   surface = gdk_cairo_surface_create_from_pixbuf (pixbuf, scale_factor, NULL);
-  gtk_list_store_set (store, &iter,
-                      0, surface,
-                      1, item,
-                      2, cc_background_item_get_name (item),
-                      -1);
 
- out:
+  gtk_list_store_insert_with_values (store, &iter, -1,
+                                     0, surface,
+                                     1, item,
+                                     2, cc_background_item_get_name (item),
+                                     -1);
+
+  /* gtk_list_store_set (store, &iter,
+     0, surface,
+     1, item,
+     2, cc_background_item_get_name (item),
+     -1);
+     */
+
+out:
   g_clear_pointer (&surface, (GDestroyNotify) cairo_surface_destroy);
   if (pixbuf)
     g_object_unref (pixbuf);
@@ -82,16 +90,16 @@ load_wallpapers (gchar              *key,
 
 static void
 list_load_cb (GObject *source_object,
-	      GAsyncResult *res,
-	      gpointer user_data)
+              GAsyncResult *res,
+              gpointer user_data)
 {
   cc_background_xml_load_list_finish (res);
 }
 
 static void
 item_added (CcBackgroundXml    *xml,
-	    CcBackgroundItem   *item,
-	    BgWallpapersSource *self)
+            CcBackgroundItem   *item,
+            BgWallpapersSource *self)
 {
   load_wallpapers (NULL, item, self);
 }
@@ -108,9 +116,9 @@ load_default_bg (BgWallpapersSource *self)
   system_data_dirs = g_get_system_data_dirs ();
   for (i = 0; system_data_dirs[i]; i++) {
     filename = g_build_filename (system_data_dirs[i],
-				 "gnome-background-properties",
-				 "adwaita.xml",
-				 NULL);
+                                 "gnome-background-properties",
+                                 "adwaita.xml",
+                                 NULL);
     if (cc_background_xml_load_xml (self->xml, filename)) {
       g_free (filename);
       break;
@@ -127,7 +135,7 @@ bg_wallpapers_source_constructed (GObject *object)
   G_OBJECT_CLASS (bg_wallpapers_source_parent_class)->constructed (object);
 
   g_signal_connect (G_OBJECT (self->xml), "added",
-		    G_CALLBACK (item_added), self);
+                    G_CALLBACK (item_added), self);
 
   /* Try adding the default background first */
   load_default_bg (self);
@@ -150,7 +158,7 @@ static void
 bg_wallpapers_source_init (BgWallpapersSource *self)
 {
   self->thumb_factory =
-    gnome_desktop_thumbnail_factory_new (GNOME_DESKTOP_THUMBNAIL_SIZE_LARGE);
+   gnome_desktop_thumbnail_factory_new (GNOME_DESKTOP_THUMBNAIL_SIZE_LARGE);
   self->xml = cc_background_xml_new ();
 }
 
