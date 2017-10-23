@@ -177,36 +177,52 @@ get_or_create_cached_pixbuf (CcBackgroundPanel *panel,
                              CcBackgroundItem  *background)
 {
   GtkAllocation allocation;
-  const gint preview_width = 309;
-  const gint preview_height = 168;
+  const gint preview_width = 310; //309
+  const gint preview_height = 174; //168
   gint scale_factor;
   GdkPixbuf *pixbuf;
+  GdkPixbuf *pixbuf_tmp;
 
   pixbuf = g_object_get_data (G_OBJECT (background), "pixbuf");
   if (pixbuf == NULL)
     {
+      gtk_widget_get_allocation (widget, &allocation);
+      scale_factor = gtk_widget_get_scale_factor (widget);
+      pixbuf = cc_background_item_get_frame_thumbnail (background,
+                                                       panel->thumb_factory,
+                                                       preview_width,
+                                                       preview_height,
+                                                       scale_factor,
+                                                       -2, TRUE);
+
       if (background == panel->current_background &&
           panel->display_screenshot != NULL)
         {
-          pixbuf = gdk_pixbuf_scale_simple (panel->display_screenshot,
-                                            preview_width,
-                                            preview_height,
-                                            GDK_INTERP_BILINEAR);
-        }
-      else
-        {
-          gtk_widget_get_allocation (widget, &allocation);
+          /* we need to add an alpha channel for for copy aera */ 
+          pixbuf = gdk_pixbuf_add_alpha (pixbuf, FALSE, 0,0,0);
 
-          scale_factor = gtk_widget_get_scale_factor (widget);
-          pixbuf = cc_background_item_get_frame_thumbnail (background,
-                                                           panel->thumb_factory,
-                                                           preview_width,
-                                                           preview_height,
-                                                           scale_factor,
-                                                           -2, TRUE);
+          pixbuf_tmp = gdk_pixbuf_scale_simple (panel->display_screenshot,
+                                             preview_width,
+                                             (preview_width
+                                              * gdk_pixbuf_get_height (panel->display_screenshot) 
+                                              / gdk_pixbuf_get_width(panel->display_screenshot)),
+                                             GDK_INTERP_BILINEAR);
+
+          gdk_pixbuf_copy_area (pixbuf_tmp,
+                                0,
+                                0,
+                                preview_width,
+                                gdk_pixbuf_get_height(pixbuf_tmp),
+                                pixbuf,
+                                0,
+                                0);
+
+          g_object_unref (pixbuf_tmp);
         }
+
       g_object_set_data_full (G_OBJECT (background), "pixbuf", pixbuf, g_object_unref);
     }
+
   return pixbuf;
 }
 
@@ -245,8 +261,6 @@ on_screenshot_finished (GObject *source,
   CcBackgroundPanel *panel = data->panel;
   GError *error;
   GdkPixbuf *pixbuf;
-  cairo_surface_t *surface;
-  cairo_t *cr;
   GVariant *result;
 
   error = NULL;
@@ -277,41 +291,31 @@ on_screenshot_finished (GObject *source,
       goto out;
     }
 
-  surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32,
-                                        data->monitor_rect.width, data->monitor_rect.height);
-  cr = cairo_create (surface);
-  gdk_cairo_set_source_pixbuf (cr, pixbuf,
-                               data->capture_rect.x - data->monitor_rect.x,
-                               data->capture_rect.y - data->monitor_rect.y);
-  cairo_paint (cr);
-  g_object_unref (pixbuf);
+  g_clear_object (&panel->display_screenshot);
 
   if (data->whole_monitor) {
-    /* clear the workarea */
-    cairo_save (cr);
-    cairo_set_operator (cr, CAIRO_OPERATOR_CLEAR);
-    cairo_rectangle (cr, data->workarea_rect.x - data->monitor_rect.x,
-                     data->workarea_rect.y - data->monitor_rect.y,
-                     data->workarea_rect.width,
-                     data->workarea_rect.height);
-    cairo_fill (cr);
-    cairo_restore (cr);
+    /* copy only top panel area from pixbuf */
+    gdk_pixbuf_copy_area (pixbuf,
+                          0,
+                          0,
+                          data->monitor_rect.width,
+                          data->monitor_rect.height - data->workarea_rect.height,
+                          panel->display_screenshot,
+                          0,
+                          0);
+    g_object_unref (pixbuf);
+
+  }
+  else {
+    panel->display_screenshot = pixbuf;
   }
 
-  g_clear_object (&panel->display_screenshot);
-  panel->display_screenshot = gdk_pixbuf_get_from_surface (surface,
-                                                           0, 0,
-                                                           data->monitor_rect.width,
-                                                           data->monitor_rect.height);
   /* invalidate existing cached pixbuf */
   g_object_set_data (G_OBJECT (panel->current_background), "pixbuf", NULL);
 
   /* remove the temporary file created by the shell */
   g_unlink (panel->screenshot_path);
   g_clear_pointer (&panel->screenshot_path, g_free);
-
-  cairo_destroy (cr);
-  cairo_surface_destroy (surface);
 
 out:
   update_display_preview (panel, WID ("background-desktop-drawingarea"), panel->current_background);
@@ -370,7 +374,6 @@ get_screenshot_async (CcBackgroundPanel *panel)
   tmpname = g_strdup_printf ("scr-%d.png", g_random_int ());
   g_free (panel->screenshot_path);
   panel->screenshot_path = g_build_filename (path, tmpname, NULL);
-  g_print (panel->screenshot_path);
   g_free (path);
   g_free (tmpname);
 
@@ -404,7 +407,7 @@ on_preview_draw (GtkWidget         *widget,
   if (panel->display_screenshot == NULL
       && panel->screenshot_path == NULL)
     {
-      //get_screenshot_async (panel);
+      get_screenshot_async (panel);
     }
   else
     update_display_preview (panel, widget, panel->current_background);
@@ -742,6 +745,13 @@ on_slides_draw (GtkWidget         *widget,
   cairo_destroy (cr);
   return TRUE;
 }
+static void
+on_background_select (GtkFlowBox      *box,
+                      GtkFlowBoxChild *child,
+                      gpointer         user_data)
+{
+    g_debug ("New background selected");
+}
 
 
 static void
@@ -810,6 +820,9 @@ cc_background_panel_init (CcBackgroundPanel *panel)
 
   /* add the gallery widget */
   widget = WID ("background-gallery");
+
+  g_signal_connect (G_OBJECT (widget), "child-activated",
+                    G_CALLBACK (on_background_select), panel);
 
   cc_background_create_wallpapers (panel, widget);
 
