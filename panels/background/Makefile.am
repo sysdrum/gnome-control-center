@@ -31,6 +31,8 @@ libbackground_chooser_la_SOURCES =	\
 	cc-background-grilo-miner.h	\
 	cc-background-item.c		\
 	cc-background-item.h		\
+	cc-background-store.c   \
+	cc-background-store.h   \
 	cc-background-xml.c		\
 	cc-background-xml.h		\
 	bg-source.c			\
