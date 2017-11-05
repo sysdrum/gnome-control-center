@@ -701,43 +701,12 @@ on_settings_changed (GSettings         *settings,
   update_preview (self, settings, NULL);
 }
 
-static GtkWidget *
-create_view (GtkWidget *parent, GtkTreeModel *model)
-{
-  GtkCellRenderer *renderer;
-  GtkWidget *icon_view;
-  GtkWidget *sw;
-
-  sw = gtk_scrolled_window_new (NULL, NULL);
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (sw), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-  gtk_widget_set_hexpand (sw, TRUE);
-  gtk_widget_set_vexpand (sw, TRUE);
-
-  icon_view = gtk_icon_view_new ();
-  gtk_icon_view_set_model (GTK_ICON_VIEW (icon_view), model);
-  gtk_widget_set_hexpand (icon_view, TRUE);
-  gtk_container_add (GTK_CONTAINER (sw), icon_view);
-
-  gtk_icon_view_set_columns (GTK_ICON_VIEW (icon_view), 3);
-
-  renderer = gtk_cell_renderer_pixbuf_new ();
-  gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (icon_view),
-                              renderer,
-                              FALSE);
-  gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (icon_view),
-                                  renderer,
-                                  "surface", 0,
-                                  NULL);
-
-  return sw;
-}
-
 static void
 on_background_select (GtkFlowBox      *box,
                       GtkFlowBoxChild *child,
                       gpointer         user_data)
 {
-  CcBackgroundGridItem *selected = (CcBackgroundGridItem *) child;
+  GtkWidget *selected = GTK_WIDGET (child);
   CcBackgroundPanel *panel = user_data;
   CcBackgroundItem *item;
   item = cc_background_grid_item_get_ref (selected);
@@ -745,14 +714,14 @@ on_background_select (GtkFlowBox      *box,
   set_background (panel, panel->settings, item);
 }
 
-gboolean
+static gboolean
 do_foreach_background_item (GtkTreeModel *model,
                             GtkTreePath *path,
                             GtkTreeIter *iter,
                             gpointer data)
 {
   CcBackgroundPanel *panel = data;
-  CcBackgroundGridItem *flow;
+  GtkWidget *flow;
   GtkWidget *widget;
   GdkPixbuf *pixbuf;
   CcBackgroundItem *item;
@@ -762,7 +731,7 @@ do_foreach_background_item (GtkTreeModel *model,
 
   gtk_tree_model_get (model, iter, 1, &item, -1);
 
-  scale_factor = gtk_widget_get_scale_factor (panel);
+  scale_factor = gtk_widget_get_scale_factor (GTK_WIDGET (panel));
 
   pixbuf = cc_background_item_get_frame_thumbnail (item,
                                                    panel->thumb_factory,
@@ -777,7 +746,7 @@ do_foreach_background_item (GtkTreeModel *model,
   cc_background_grid_item_set_ref (flow, item);
   gtk_widget_show (flow);
   gtk_widget_show (widget);
-  gtk_container_add (flow, widget);
+  gtk_container_add (GTK_CONTAINER (flow), widget);
 
   gtk_flow_box_insert (GTK_FLOW_BOX (WID("background-gallery")), flow, -1);
   return TRUE;
@@ -797,11 +766,11 @@ static void
 on_open_gnome_photos (GtkWidget *widget,
                       gpointer  user_data)
 {
-  GdkAppLaunchContext *context;
+  GAppLaunchContext *context;
   GDesktopAppInfo *appInfo;
   GError **error = NULL;
 
-  context = gdk_display_get_app_launch_context (gdk_display_get_default ());
+  context = G_APP_LAUNCH_CONTEXT (gdk_display_get_app_launch_context (gdk_display_get_default ()));
   appInfo = g_desktop_app_info_new("org.gnome.Photos.desktop");
 
   g_object_unref (context);
@@ -810,7 +779,7 @@ on_open_gnome_photos (GtkWidget *widget,
     g_debug ("Gnome Photos is not installed.");
   }
   else {
-    g_app_info_launch (appInfo, NULL, context, error);
+    g_app_info_launch (G_APP_INFO (appInfo), NULL, context, error);
     g_prefix_error (error,
                     ("Problem opening Gnome Photos: "));
 
@@ -884,17 +853,15 @@ load_wallpapers (CcBackgroundPanel *panel,
                  GtkWidget *parent)
 {
   GtkListStore *model;
-  GtkTreeIter iter;
-  GtkTreePath  *path;
-  GValue *value = NULL;
-  gint scale_factor;
+  /*gint scale_factor;
 
-  scale_factor = gtk_widget_get_scale_factor (panel);
+  scale_factor = gtk_widget_get_scale_factor (GTK_WIDGET (panel));
+  */
 
   panel->wallpapers_source = bg_wallpapers_source_new (GTK_WINDOW (NULL));
   model = bg_source_get_liststore (BG_SOURCE (panel->wallpapers_source));
 
-  gtk_tree_model_foreach (model, do_foreach_background_item, panel);
+  gtk_tree_model_foreach (GTK_TREE_MODEL (model), do_foreach_background_item, panel);
 
   g_signal_connect (model, "row-inserted", G_CALLBACK (on_source_added_cb), panel);
   //g_signal_connect (model, "row-deleted", G_CALLBACK (on_source_removed_cb), chooser);
@@ -907,7 +874,6 @@ cc_background_panel_init (CcBackgroundPanel *panel)
   gchar *objects[] = {"background-panel", NULL };
   GError *err = NULL;
   GtkStyleProvider *provider;
-  GtkStyleContext *context;
   GtkWidget *widget;
 
   panel->connection = g_application_get_dbus_connection (g_application_get_default ());
@@ -937,9 +903,8 @@ cc_background_panel_init (CcBackgroundPanel *panel)
   /* add style */
   widget = WID ("background-preview-top");
   provider = GTK_STYLE_PROVIDER (gtk_css_provider_new ());
-  gtk_css_provider_load_from_resource (provider,
+  gtk_css_provider_load_from_resource (GTK_CSS_PROVIDER (provider),
                                        "org/gnome/control-center/background/background.css");
-  context = gtk_widget_get_style_context (widget);
   gtk_style_context_add_provider_for_screen (gdk_screen_get_default(),
                                              provider,
                                              GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
@@ -953,7 +918,6 @@ cc_background_panel_init (CcBackgroundPanel *panel)
   panel->capture_cancellable = g_cancellable_new ();
 
   panel->thumb_factory = gnome_desktop_thumbnail_factory_new (GNOME_DESKTOP_THUMBNAIL_SIZE_LARGE);
-
 
   /* add button handler */
   widget = WID ("open-gnome-photos");
