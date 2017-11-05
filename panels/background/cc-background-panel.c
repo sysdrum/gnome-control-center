@@ -856,9 +856,10 @@ load_wallpapers (CcBackgroundPanel *panel,
   /*gint scale_factor;
 
   scale_factor = gtk_widget_get_scale_factor (GTK_WIDGET (panel));
-  */
+  g_print ("Scale factor %d\n", scale_factor);*/
 
-  panel->wallpapers_source = bg_wallpapers_source_new (GTK_WINDOW (NULL));
+  /* FIXME: get the right window to pass it to bg_wallpapers_source_new */
+  panel->wallpapers_source = bg_wallpapers_source_new (GTK_WIDGET (panel));
   model = bg_source_get_liststore (BG_SOURCE (panel->wallpapers_source));
 
   gtk_tree_model_foreach (GTK_TREE_MODEL (model), do_foreach_background_item, panel);
@@ -873,7 +874,7 @@ cc_background_panel_init (CcBackgroundPanel *panel)
 {
   gchar *objects[] = {"background-panel", NULL };
   GError *err = NULL;
-  GtkStyleProvider *provider;
+  GtkCssProvider *provider;
   GtkWidget *widget;
 
   panel->connection = g_application_get_dbus_connection (g_application_get_default ());
@@ -902,11 +903,11 @@ cc_background_panel_init (CcBackgroundPanel *panel)
 
   /* add style */
   widget = WID ("background-preview-top");
-  provider = GTK_STYLE_PROVIDER (gtk_css_provider_new ());
-  gtk_css_provider_load_from_resource (GTK_CSS_PROVIDER (provider),
+  provider = gtk_css_provider_new ();
+  gtk_css_provider_load_from_resource (provider,
                                        "org/gnome/control-center/background/background.css");
   gtk_style_context_add_provider_for_screen (gdk_screen_get_default(),
-                                             provider,
+                                             GTK_STYLE_PROVIDER (provider),
                                              GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
   g_object_unref (provider);
 
