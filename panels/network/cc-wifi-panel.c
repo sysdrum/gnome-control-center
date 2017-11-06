@@ -141,8 +141,11 @@ load_wifi_devices (CcWifiPanel *self)
   devices = nm_client_get_devices (self->client);
 
   /* Cold-plug existing devices */
-  for (i = 0; i < devices->len; i++)
-    add_wifi_device (self, g_ptr_array_index (devices, i));
+  if (devices)
+    {
+      for (i = 0; i < devices->len; i++)
+        add_wifi_device (self, g_ptr_array_index (devices, i));
+    }
 
   check_main_stack_page (self);
 }
@@ -453,7 +456,7 @@ rfkill_switch_notify_activate_cb (GtkSwitch   *rfkill_switch,
 static const gchar *
 cc_wifi_panel_get_help_uri (CcPanel *panel)
 {
-  return "help:gnome-help/wifi";
+  return "help:gnome-help/net-wireless";
 }
 
 static GtkWidget *
