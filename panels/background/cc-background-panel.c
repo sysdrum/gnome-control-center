@@ -168,10 +168,13 @@ get_or_create_cached_pixbuf (CcBackgroundPanel *panel,
                              CcBackgroundItem  *background)
 {
   GtkAllocation allocation;
-  const gint preview_width = 310; //309
-  const gint preview_height = 174; //168
+
+  //const gint preview_width;// = 310; //309
+  //const gint preview_height;// = 174; //168
   gint scale_factor;
   GdkPixbuf *pixbuf;
+  const gint preview_width = gtk_widget_get_allocated_width (widget);
+  const gint preview_height = gtk_widget_get_allocated_height (widget);
 
   pixbuf = g_object_get_data (G_OBJECT (background), "pixbuf");
   if (pixbuf == NULL)
@@ -197,6 +200,16 @@ on_preview_draw (GtkWidget         *widget,
 {
   GdkPixbuf *pixbuf;
 
+  const gint width = gtk_widget_get_allocated_width (panel);
+  const gint height = gtk_widget_get_allocated_height (panel);
+  if (height < 500) {
+    gtk_widget_set_size_request (widget, 200, 200*9/16);
+  }
+
+  else if (height > 500) {
+    gtk_widget_set_size_request (widget, 310, 170);
+  }
+
   pixbuf = get_or_create_cached_pixbuf (panel,
                                         widget,
                                         panel->current_background);
@@ -205,6 +218,15 @@ on_preview_draw (GtkWidget         *widget,
                                0, 0);
   cairo_paint (cr);
 
+  return TRUE;
+}
+
+static gboolean
+resize_preview (GtkWidget *widget,
+               GdkEvent  *event,
+               gpointer   user_data)
+{
+  g_print ("run me");
   return TRUE;
 }
 
@@ -589,9 +611,17 @@ is_gnome_photos_installed ()
   return TRUE;
 }
 
+static void
+on_window_resize (GtkWidget    *widget,
+                  GdkRectangle *allocation,
+                  gpointer      user_data)
+{
+  g_print ("New size\n");
+}
+
 static GtkWidget *
 create_gallery_item (gpointer item,
-                    gpointer user_data)
+                     gpointer user_data)
 {
   CcBackgroundPanel *panel = user_data;
   GtkWidget *flow;
@@ -707,4 +737,5 @@ cc_background_panel_init (CcBackgroundPanel *panel)
 
   /* Background settings */
   g_signal_connect (panel->settings, "changed", G_CALLBACK (on_settings_changed), panel);
+  g_signal_connect (panel, "configure-event", G_CALLBACK (resize_preview), panel);
 }
