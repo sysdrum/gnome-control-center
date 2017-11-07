@@ -202,12 +202,14 @@ on_preview_draw (GtkWidget         *widget,
 
   const gint width = gtk_widget_get_allocated_width (panel);
   const gint height = gtk_widget_get_allocated_height (panel);
-  if (height < 500) {
+  g_print ("Window height: %d\n", height);
+  if (height < 700) {
     gtk_widget_set_size_request (widget, 200, 200*9/16);
   }
 
-  else if (height > 500) {
+  else if (height > 700) {
     gtk_widget_set_size_request (widget, 310, 170);
+    g_object_set_data_full (G_OBJECT (panel->current_background), "pixbuf", NULL, g_object_unref);
   }
 
   pixbuf = get_or_create_cached_pixbuf (panel,
