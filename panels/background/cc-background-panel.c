@@ -83,6 +83,8 @@ cc_background_panel_dispose (GObject *object)
   /* destroying the builder object will also destroy the spinner */
   panel->spinner = NULL;
 
+  g_clear_object (&panel->settings);
+
   if (panel->copy_cancellable)
     {
       /* cancel any copy operation */
@@ -103,7 +105,6 @@ cc_background_panel_finalize (GObject *object)
 
   g_clear_object (&panel->current_background);
   g_clear_object (&panel->store);
-  g_clear_object (&panel->settings);
 
   G_OBJECT_CLASS (cc_background_panel_parent_class)->finalize (object);
 }
