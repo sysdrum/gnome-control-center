@@ -592,6 +592,59 @@ is_gnome_photos_installed ()
   return TRUE;
 }
 
+static void
+add_slideshow_emblem (GdkPixbuf *pixbuf,
+                      gint scale_factor)
+{
+  GdkPixbuf *slideshow_emblem;
+  GIcon *icon = NULL;
+  GtkIconInfo *icon_info = NULL;
+  GError *error = NULL;
+  GtkIconTheme *theme;
+
+  int eh;
+  int ew;
+  int h;
+  int w;
+  int x;
+  int y;
+
+  icon = g_themed_icon_new ("slideshow-emblem");
+  theme = gtk_icon_theme_get_default ();
+  icon_info = gtk_icon_theme_lookup_by_gicon_for_scale (theme,
+                                                        icon,
+                                                        16,
+                                                        scale_factor,
+                                                        GTK_ICON_LOOKUP_FORCE_SIZE |
+                                                        GTK_ICON_LOOKUP_USE_BUILTIN);
+  if (icon_info == NULL) {
+    g_warning ("Your icon theme is missing the slideshow-emblem icon, "
+               "please file a bug against it");
+  }
+  else {
+
+    slideshow_emblem = gtk_icon_info_load_icon (icon_info, &error);
+    if (slideshow_emblem == NULL) {
+      g_warning ("Failed to load slideshow emblem: %s", error->message);
+      g_error_free (error);
+    }
+    else {
+      eh = gdk_pixbuf_get_height (slideshow_emblem);
+      ew = gdk_pixbuf_get_width (slideshow_emblem);
+      h = gdk_pixbuf_get_height (pixbuf);
+      w = gdk_pixbuf_get_width (pixbuf);
+      x = w - ew;
+      y = h - eh;
+
+      gdk_pixbuf_composite (slideshow_emblem, pixbuf, x, y, ew, eh, x, y, 1.0, 1.0, GDK_INTERP_BILINEAR, 255);
+    }
+  }
+
+  g_clear_object (&icon_info);
+  g_clear_object (&icon);
+}
+
+
 static GtkWidget *
 create_gallery_item (gpointer item,
                      gpointer user_data)
@@ -614,6 +667,10 @@ create_gallery_item (gpointer item,
                                                    scale_factor,
                                                    -2, TRUE);
 
+
+  if (cc_background_item_changes_with_time (self)) {
+    add_slideshow_emblem (pixbuf, scale_factor);
+  }
   widget = gtk_image_new_from_pixbuf (pixbuf);
 
   flow = cc_background_grid_item_new(self);
