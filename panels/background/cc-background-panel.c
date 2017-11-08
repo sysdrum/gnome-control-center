@@ -146,8 +146,7 @@ update_preview (CcBackgroundPanel *panel,
       changes_with_time = cc_background_item_changes_with_time (current_background);
     }
 
-  gtk_widget_set_visible (WID ("slide_image"), changes_with_time);
-  gtk_widget_set_visible (WID ("slide-label"), changes_with_time);
+  gtk_widget_set_visible (WID ("slide-box"), changes_with_time);
 
   gtk_widget_queue_draw (WID ("background-desktop-drawingarea"));
 }
