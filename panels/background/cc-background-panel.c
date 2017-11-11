@@ -201,25 +201,24 @@ on_preview_draw (GtkWidget         *widget,
                  CcBackgroundPanel *panel)
 {
   GdkPixbuf *pixbuf;
-  const gint width = gtk_widget_get_allocated_width (panel);
-  gint height  = gtk_widget_get_allocated_height (panel);
-  gint request_height;
-  const gint preview_width = gtk_widget_get_allocated_width (widget);
-  const gint preview_height = gtk_widget_get_allocated_height (widget);
-  /*g_print ("Height %d", height);
-  if (preview_width > 310) {
+  /*const gint width = gtk_widget_get_allocated_width (panel);
+    gint height  = gtk_widget_get_allocated_height (panel);
+    gint request_height;
+    const gint preview_width = gtk_widget_get_allocated_width (widget);
+    const gint preview_height = gtk_widget_get_allocated_height (widget);
+    g_print ("Height %d", height);
+    if (preview_width > 310) {
     gtk_widget_set_vexpand (WID ("background-preview"), FALSE);
     gtk_widget_set_size_request (widget, 310, preview_height);
-  }
-  else {
+    }
+    else {
     gtk_widget_set_vexpand (WID ("background-preview"), TRUE);
     gtk_widget_set_size_request (widget, -1, -1);
-  }
-  */
+    }
 
-  /*gtk_widget_get_size_request (WID ("background-gallery-box"), NULL, &request_height);
-  g_print ("Height %d\n", height);
-  gtk_widget_set_size_request (WID ("background-gallery-box"), -1, height - 300);
+    gtk_widget_get_size_request (WID ("background-gallery-box"), NULL, &request_height);
+    g_print ("Height %d\n", height);
+    gtk_widget_set_size_request (WID ("background-gallery-box"), -1, height - 300);
   */
 
   pixbuf = get_or_create_cached_pixbuf (panel,
@@ -232,6 +231,23 @@ on_preview_draw (GtkWidget         *widget,
 
   return TRUE;
 }
+
+static void
+on_panel_resize (GtkWidget *widget,
+                 GdkRectangle *allocation,
+                 gpointer      user_data)
+{
+  CcBackgroundPanel *panel = CC_BACKGROUND_PANEL (user_data);
+  GtkWidget *preview = WID ("background-preview");
+
+  if (allocation->height > 700) {
+    gtk_widget_set_size_request (preview, -1, 200);
+  }
+  else {
+    gtk_widget_set_size_request (preview, -1, 150);
+  }
+}
+
 
 static void
 reload_current_bg (CcBackgroundPanel *panel,
@@ -752,6 +768,9 @@ cc_background_panel_init (CcBackgroundPanel *panel)
   /* setup preview area */
   widget = WID ("background-desktop-drawingarea");
   g_signal_connect (widget, "draw", G_CALLBACK (on_preview_draw), panel);
+
+  /* Add handler for resizing the preview */
+  g_signal_connect (panel, "size-allocate", G_CALLBACK (on_panel_resize), panel);
 
   panel->copy_cancellable = g_cancellable_new ();
 
