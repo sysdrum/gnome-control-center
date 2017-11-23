@@ -36,8 +36,6 @@
 #include "cc-background-resources.h"
 #include "cc-background-xml.h"
 
-#include "bg-pictures-source.h"
-
 #define WP_PATH_ID "org.gnome.desktop.background"
 #define WP_LOCK_PATH_ID "org.gnome.desktop.screensaver"
 #define WP_URI_KEY "picture-uri"
@@ -308,61 +306,6 @@ create_save_dir (void)
 }
 
 static void
-copy_finished_cb (GObject      *source_object,
-                  GAsyncResult *result,
-                  gpointer      pointer)
-{
-  GError *err = NULL;
-  CcBackgroundPanel *panel = (CcBackgroundPanel *) pointer;
-  CcBackgroundItem *item;
-  CcBackgroundItem *current_background;
-  GSettings *settings;
-
-  if (!g_file_copy_finish (G_FILE (source_object), result, &err))
-    {
-      if (g_error_matches (err, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
-        g_error_free (err);
-        return;
-      }
-      g_warning ("Failed to copy image to cache location: %s", err->message);
-      g_error_free (err);
-    }
-  item = g_object_get_data (source_object, "item");
-  settings = g_object_get_data (source_object, "settings");
-  current_background = panel->current_background;
-
-  g_settings_apply (settings);
-
-  /* the panel may have been destroyed before the callback is run, so be sure
-   * to check the widgets are not NULL */
-
-  if (panel->spinner)
-    {
-      gtk_widget_destroy (GTK_WIDGET (panel->spinner));
-      panel->spinner = NULL;
-    }
-
-  if (current_background)
-    cc_background_item_load (current_background, NULL);
-
-  if (panel->builder)
-    {
-      char *filename;
-
-      update_preview (panel, settings, item);
-      current_background = panel->current_background;
-
-      /* Save the source XML if there is one */
-      filename = get_save_path ("last-edited.xml");
-      if (create_save_dir ())
-        cc_background_xml_save (current_background, filename);
-    }
-
-  /* remove the reference taken when the copy was set up */
-  g_object_unref (panel);
-}
-
-static void
 set_background (CcBackgroundPanel *panel,
                 GSettings         *settings,
                 CcBackgroundItem  *item)
@@ -387,78 +330,7 @@ set_background (CcBackgroundPanel *panel,
   else if (cc_background_item_get_source_url (item) != NULL &&
            cc_background_item_get_needs_download (item))
     {
-      GFile *source, *dest;
-      char *cache_path, *basename, *dest_path, *display_name, *dest_uri;
-      GdkPixbuf *pixbuf;
-
-      cache_path = bg_pictures_source_get_cache_path ();
-      if (g_mkdir_with_parents (cache_path, USER_DIR_MODE) < 0)
-        {
-          g_warning ("Failed to create directory '%s'", cache_path);
-          g_free (cache_path);
-          return;
-        }
-      g_free (cache_path);
-
-      dest_path = bg_pictures_source_get_unique_path (cc_background_item_get_source_url (item));
-      dest = g_file_new_for_path (dest_path);
-      g_free (dest_path);
-      source = g_file_new_for_uri (cc_background_item_get_source_url (item));
-      basename = g_file_get_basename (source);
-      display_name = g_filename_display_name (basename);
-      dest_path = g_file_get_path (dest);
-      g_free (basename);
-
-      /* create a blank image to use until the source image is ready */
-      pixbuf = gdk_pixbuf_new (GDK_COLORSPACE_RGB, TRUE, 8, 1, 1);
-      gdk_pixbuf_fill (pixbuf, 0x00000000);
-      gdk_pixbuf_save (pixbuf, dest_path, "png", NULL, NULL);
-      g_object_unref (pixbuf);
-      g_free (dest_path);
-
-      if (panel->copy_cancellable)
-        {
-          g_cancellable_cancel (panel->copy_cancellable);
-          g_cancellable_reset (panel->copy_cancellable);
-        }
-
-      if (panel->spinner)
-        {
-          gtk_widget_destroy (GTK_WIDGET (panel->spinner));
-          panel->spinner = NULL;
-        }
-
-      /* create a spinner while the file downloads */
-      panel->spinner = gtk_spinner_new ();
-      gtk_spinner_start (GTK_SPINNER (panel->spinner));
-      gtk_box_pack_start (GTK_BOX (WID ("bottom-hbox")), panel->spinner, FALSE,
-                          FALSE, 6);
-      gtk_widget_show (panel->spinner);
-
-      /* reference the panel in case it is removed before the copy is
-       * finished */
-      g_object_ref (panel);
-      g_object_set_data_full (G_OBJECT (source), "item", g_object_ref (item), g_object_unref);
-      g_object_set_data (G_OBJECT (source), "settings", settings);
-      g_file_copy_async (source, dest, G_FILE_COPY_OVERWRITE,
-                         G_PRIORITY_DEFAULT, panel->copy_cancellable,
-                         NULL, NULL,
-                         copy_finished_cb, panel);
-      g_object_unref (source);
-      dest_uri = g_file_get_uri (dest);
-      g_object_unref (dest);
-
-      g_settings_set_string (settings, WP_URI_KEY, dest_uri);
-      g_object_set (G_OBJECT (item),
-                    "uri", dest_uri,
-                    "needs-download", FALSE,
-                    "name", display_name,
-                    NULL);
-      g_free (display_name);
-      g_free (dest_uri);
-
-      /* delay the updated drawing of the preview until the copy finishes */
-      save_settings = FALSE;
+      //do not handle
     }
   else
     {
