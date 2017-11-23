@@ -27,8 +27,6 @@ libbackground_la_SOURCES =		\
 	$(BUILT_SOURCES)		\
 	cc-background-panel.c		\
 	cc-background-panel.h   \
-	cc-background-grilo-miner.c	\
-	cc-background-grilo-miner.h	\
 	cc-background-item.c		\
 	cc-background-item.h		\
 	cc-background-store.c   \
@@ -40,11 +38,7 @@ libbackground_la_SOURCES =		\
 	bg-source.c			\
 	bg-source.h			\
 	bg-wallpapers-source.c		\
-	bg-wallpapers-source.h		\
-	bg-pictures-source.c		\
-	bg-pictures-source.h		\
-	bg-colors-source.c		\
-	bg-colors-source.h
+	bg-wallpapers-source.h
 
 libbackground_la_LIBADD = $(PANEL_LIBS) $(BACKGROUND_PANEL_LIBS)
 
