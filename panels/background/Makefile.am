@@ -41,6 +41,8 @@ libbackground_la_SOURCES =		\
 	bg-source.h			\
 	bg-wallpapers-source.c		\
 	bg-wallpapers-source.h		\
+	bg-pictures-source.c		\
+	bg-pictures-source.h		\
 	bg-colors-source.c		\
 	bg-colors-source.h
 
