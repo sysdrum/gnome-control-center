@@ -54,10 +54,6 @@ libbackground_la_SOURCES =		\
 
 libbackground_la_LIBADD = $(PANEL_LIBS) $(BACKGROUND_PANEL_LIBS) libbackground-chooser.la
 
-noinst_PROGRAMS = test-chooser-dialog
-test_chooser_dialog_SOURCES = test-chooser-dialog.c
-test_chooser_dialog_LDADD = libbackground-chooser.la $(PANEL_LIBS) $(BACKGROUND_PANEL_LIBS)
-
 resource_files = $(shell glib-compile-resources --sourcedir=$(srcdir) --generate-dependencies $(srcdir)/background.gresource.xml)
 cc-background-resources.c: background.gresource.xml $(resource_files)
 	$(AM_V_GEN) glib-compile-resources --target=$@ --sourcedir=$(srcdir) --generate-source --c-name cc_background $<
