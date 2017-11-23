@@ -21,12 +21,12 @@ BUILT_SOURCES = 			\
 	gdesktop-enums-types.c		\
 	gdesktop-enums-types.h
 
-noinst_LTLIBRARIES = libbackground.la libbackground-chooser.la
+noinst_LTLIBRARIES = libbackground.la
 
-libbackground_chooser_la_SOURCES =	\
+libbackground_la_SOURCES =		\
 	$(BUILT_SOURCES)		\
-	cc-background-chooser-dialog.c	\
-	cc-background-chooser-dialog.h	\
+	cc-background-panel.c		\
+	cc-background-panel.h   \
 	cc-background-grilo-miner.c	\
 	cc-background-grilo-miner.h	\
 	cc-background-item.c		\
@@ -39,20 +39,12 @@ libbackground_chooser_la_SOURCES =	\
 	cc-background-xml.h		\
 	bg-source.c			\
 	bg-source.h			\
-	bg-pictures-source.c		\
-	bg-pictures-source.h		\
 	bg-wallpapers-source.c		\
 	bg-wallpapers-source.h		\
 	bg-colors-source.c		\
 	bg-colors-source.h
 
-libbackground_chooser_la_LIBADD = $(PANEL_LIBS) $(BACKGROUND_PANEL_LIBS)
-
-libbackground_la_SOURCES =		\
-	cc-background-panel.c		\
-	cc-background-panel.h
-
-libbackground_la_LIBADD = $(PANEL_LIBS) $(BACKGROUND_PANEL_LIBS) libbackground-chooser.la
+libbackground_la_LIBADD = $(PANEL_LIBS) $(BACKGROUND_PANEL_LIBS)
 
 resource_files = $(shell glib-compile-resources --sourcedir=$(srcdir) --generate-dependencies $(srcdir)/background.gresource.xml)
 cc-background-resources.c: background.gresource.xml $(resource_files)
