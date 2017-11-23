@@ -39,6 +39,7 @@
 #include "bg-pictures-source.h"
 
 #define WP_PATH_ID "org.gnome.desktop.background"
+#define WP_LOCK_PATH_ID "org.gnome.desktop.screensaver"
 #define WP_URI_KEY "picture-uri"
 #define WP_OPTIONS_KEY "picture-options"
 #define WP_SHADING_KEY "color-shading-type"
@@ -52,6 +53,7 @@ struct _CcBackgroundPanel
   GtkBuilder *builder;
   GDBusConnection *connection;
   GSettings *settings;
+  GSettings *lock_settings;
 
   GnomeDesktopThumbnailFactory *thumb_factory;
 
@@ -84,6 +86,7 @@ cc_background_panel_dispose (GObject *object)
   panel->spinner = NULL;
 
   g_clear_object (&panel->settings);
+  g_clear_object (&panel->lock_settings);
 
   if (panel->copy_cancellable)
     {
@@ -515,6 +518,7 @@ on_background_select (GtkFlowBox      *box,
   item = cc_background_grid_item_get_ref (selected);
 
   set_background (panel, panel->settings, item);
+  set_background (panel, panel->lock_settings, item);
 }
 
 static void
@@ -656,6 +660,9 @@ cc_background_panel_init (CcBackgroundPanel *panel)
 
   panel->settings = g_settings_new (WP_PATH_ID);
   g_settings_delay (panel->settings);
+
+  panel->lock_settings = g_settings_new (WP_LOCK_PATH_ID);
+  g_settings_delay (panel->lock_settings);
 
   /* add the top level widget */
   widget = WID ("background-panel");
